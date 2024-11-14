@@ -1,9 +1,9 @@
-# React + Vite
+# Scale-O-Matic 3000
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Written with Vite + React.
 
-Currently, two official plugins are available:
+A musical scale builder aimed at guitarists.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-# scaleomatic-vite
+Once the user selects the root note and mode, the app returns the chords and notes in the scale.
+
+Note: the scales are calculated programatically rather than being stored in a table.
