@@ -1,0 +1,74 @@
+.App a {
+  text-decoration: none;
+  color: #014f86;
+  font-weight: bold;
+
+}
+
+.App{
+  text-align: center;
+  min-height: 125%;
+  padding-bottom: 150px;
+}
+
+.buttonActive{
+  font-weight: bold;
+  background-color: #014f86 !important;
+  transform: scale(1.2);
+}
+
+.intervalBody{
+  background-color: #89c2d9;
+  border: 2px solid #ffffff;
+  height: 75px;
+  border-radius:5px;
+  padding-right:5px;
+  padding-left:5px;
+}
+
+.intervalBodyText{
+  font-weight:bold;
+  font-size: large;
+  
+}
+
+.intervalHeader{
+  background-color: #014f86;
+  border: 2px solid #ffffff;
+  border-radius:5px;
+}
+
+.intervalHeaderText{
+  color: #ffffff;
+  font-weight:bold;
+  font-size: large;
+  text-shadow: 1px 1px 1px #89c2d9;
+  margin-top:5px;
+}
+
+.keyButton, .scaleButton{
+  margin-right:2px;
+  margin-left:2px;
+  margin-bottom: 5px;
+}
+
+.panelWrapper{
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+
+
+.raleway-headline {
+  font-family: "Raleway", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.raleway-body {
+  font-family: "Raleway", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+}
