@@ -138,7 +138,7 @@ function App() {
               alt="robot lion"
             /></a>
           </div>
-            <div className="navbar-nav me-auto">
+            <div className="navbar-nav">
               <a className="nav-link" aria-current="page" href="https://robotlions.com">
                 robotlions.com
               </a>
