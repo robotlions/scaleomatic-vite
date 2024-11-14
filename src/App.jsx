@@ -288,6 +288,7 @@ function App() {
         </div>
       </div>
       </div>
+      <p style={{marginTop:30}}>Are you learning the guitar and need to memorize the fretboard? Try our <a href="https://guitartrainer.robotlions.com"> fretboard training app</a>.</p>
       <p style={{marginTop:50}}>© {currentYear} by <a href="https://chadmusick.com/">Chad Musick</a></p>
 {console.log(currentScaleArray)}
     </div>
