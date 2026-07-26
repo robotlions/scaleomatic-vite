@@ -1,74 +1,89 @@
-.App a {
-  text-decoration: none;
-  color: #014f86;
+.key-btn{
+  border: none !important;
+}
+
+.mode-btn {
+  width:175px;
+}
+
+.note-btn {
+ height:50px;
+ width:50px;
+  font-family: var(--bs-font-monospace);
   font-weight: bold;
-
 }
 
-.App{
-  text-align: center;
-  min-height: 125%;
-  padding-bottom: 150px;
+.triad-card {
+  transition: all 0.15s ease;
+
+  &.M {
+    border-left: 3px solid var(--bs-primary);
+  }
+
+  &.m {
+    border-left: 3px solid var(--bs-border-color);
+    opacity: 0.85;
+  }
+
+  &.dim {
+    border-left: 3px dashed var(--bs-border-color);
+  }
+
+  &.aug {
+    border-left: 3px dotted var(--bs-primary);
+    opacity: 0.9;
+  }
 }
 
-.buttonActive{
-  font-weight: bold;
-  background-color: #014f86 !important;
-  transform: scale(1.2);
+.triad-numeral {
+  font-family: var(--bs-font-sans-serif);
 }
 
-.intervalBody{
-  background-color: #89c2d9;
-  border: 2px solid #ffffff;
-  height: 75px;
-  border-radius:5px;
-  padding-right:5px;
-  padding-left:5px;
+.triad-name {
+  font-family: var(--bs-font-monospace);
+  font-size: 1.5rem;
 }
 
-.intervalBodyText{
-  font-weight:bold;
-  font-size: large;
-  
+.triad-notes {
+  font-family: var(--bs-font-monospace);
 }
 
-.intervalHeader{
-  background-color: #014f86;
-  border: 2px solid #ffffff;
-  border-radius:5px;
+.triad-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--bs-secondary-color);
 }
 
-.intervalHeaderText{
-  color: #ffffff;
-  font-weight:bold;
-  font-size: large;
-  text-shadow: 1px 1px 1px #89c2d9;
-  margin-top:5px;
+.triad-key-swatch {
+  width: 24px;
+  height: 20px;
+  border-radius: 3px;
+  background: var(--bs-body-bg);
+  flex-shrink: 0;
 }
 
-.keyButton, .scaleButton{
-  margin-right:2px;
-  margin-left:2px;
-  margin-bottom: 5px;
+.triad-key-swatch.M {
+  border-left: 3px solid var(--bs-primary);
 }
 
-.panelWrapper{
-  padding-left: 0 !important;
-  padding-right: 0 !important;
+.triad-key-swatch.m {
+  border-left: 3px solid var(--bs-border-color);
+  opacity: 0.85;
 }
 
-
-
-.raleway-headline {
-  font-family: "Raleway", sans-serif;
-  font-optical-sizing: auto;
-  font-weight: 700;
-  font-style: normal;
+.triad-key-swatch.dim {
+  border-left: 3px dashed var(--bs-border-color);
 }
 
-.raleway-body {
-  font-family: "Raleway", sans-serif;
-  font-optical-sizing: auto;
-  font-weight: 400;
-  font-style: normal;
+.triad-key-swatch.aug {
+  border-left: 3px dotted var(--bs-primary);
+  opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+  .note-btn {
+    min-width: 36px;
+  }
 }

@@ -1,298 +1,195 @@
-import "./App.css";
-import { useState } from "react";
-import "bootstrap/dist/css/bootstrap.css";
-import "bootstrap/dist/js/bootstrap.js";
-import { keyArray } from "./Data/ScaleObjects";
-import { intToKey } from "./Data/ScaleObjects";
-import { intToScale } from "./Data/ScaleObjects";
-import { scaleArray } from "./Data/ScaleObjects";
-import { intervalSteps } from "./Data/ScaleObjects";
-import { minorSteps } from "./Data/ScaleObjects";
-import bannerImage from "./assets/images/robotLionsGuitar.jpg";
+import { useState } from 'react'
+import './App.css'
 
+const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 
+const MODES = [
+  { name: 'Ionian (Major)', intervals: [2, 2, 1, 2, 2, 2, 1], qualities: ['M', 'm', 'm', 'M', 'M', 'm', 'dim'] },
+  { name: 'Dorian',        intervals: [2, 1, 2, 2, 2, 1, 2], qualities: ['m', 'dim', 'M', 'M', 'm', 'm', 'M'] },
+  { name: 'Phrygian',      intervals: [1, 2, 2, 2, 1, 2, 2], qualities: ['dim', 'M', 'm', 'm', 'm', 'M', 'M'] },
+  { name: 'Lydian',        intervals: [2, 2, 2, 1, 2, 2, 1], qualities: ['M', 'M', 'm', 'dim', 'M', 'm', 'm'] },
+  { name: 'Mixolydian',    intervals: [2, 2, 1, 2, 2, 1, 2], qualities: ['M', 'm', 'dim', 'M', 'm', 'm', 'M'] },
+  { name: 'Aeolian (Minor)', intervals: [2, 1, 2, 2, 1, 2, 2], qualities: ['m', 'dim', 'M', 'm', 'm', 'M', 'M'] },
+  { name: 'Locrian',       intervals: [1, 2, 2, 1, 2, 2, 2], qualities: ['dim', 'M', 'm', 'm', 'M', 'M', 'm'] },
+  { name: 'Harmonic Minor', intervals: [2, 1, 2, 2, 1, 3, 1], qualities: ['m', 'dim', 'aug', 'm', 'M', 'M', 'dim'] },
+]
+
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII']
+
+const QUALITY_SUFFIX = { M: '', m: 'm', dim: 'dim', aug: 'aug' }
+const QUALITY_SYMBOL = { M: 'maj', m: 'm', dim: 'dim', aug: 'aug' }
+
+function getScaleNotes(rootNote, mode) {
+  const intervals = MODES[mode].intervals
+  const notes = [rootNote]
+  let current = rootNote
+  for (let i = 0; i < 6; i++) {
+    current = (current + intervals[i]) % 12
+    notes.push(current)
+  }
+  return notes
+}
+
+const LETTER_NAMES = ['C', 'D', 'E', 'F', 'G', 'A', 'B']
+const LETTER_NATURAL = [0, 2, 4, 5, 7, 9, 11]
+const CHROMATIC_TO_LETTER = [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6]
+
+function spellNote(chromaticIndex, letterIndex) {
+  const letter = LETTER_NAMES[letterIndex]
+  const natural = LETTER_NATURAL[letterIndex]
+  const diff = (chromaticIndex - natural + 12) % 12
+  if (diff === 1) return letter + '#'
+  if (diff === 11) return letter + 'b'
+  return letter
+}
+
+function spellScale(rootNote, mode) {
+  const rootLetter = CHROMATIC_TO_LETTER[rootNote]
+  const scaleNotes = getScaleNotes(rootNote, mode)
+  return scaleNotes.map((note, i) => spellNote(note, (rootLetter + i) % 7))
+}
+
+function getTriads(rootNote, mode) {
+  const qualities = MODES[mode].qualities
+  const scaleNotes = getScaleNotes(rootNote, mode)
+  const spelled = spellScale(rootNote, mode)
+
+  return scaleNotes.map((note, i) => {
+    const third = (i + 2) % 7
+    const fifth = (i + 4) % 7
+    const quality = qualities[i]
+    const roman = quality === 'M' || quality === 'dim' || quality === 'aug'
+      ? ROMAN[i]
+      : ROMAN[i].toLowerCase()
+
+    return {
+      numeral: quality === 'dim' ? roman + '\u00B0' : quality === 'aug' ? roman + '+' : roman,
+      root: spelled[i],
+      name: spelled[i] + QUALITY_SUFFIX[quality],
+      notes: [spelled[i], spelled[third], spelled[fifth]],
+      quality,
+      qualityLabel: QUALITY_SYMBOL[quality],
+    }
+  })
+}
 
 function App() {
-  const [currentKey, setCurrentKey] = useState(1);
-  const [active, setActive] = useState(1);
-  const [activeScale, setActiveScale] = useState(1);
-  const [scaleDegree, setScaleDegree] = useState(1);
-  let currentScaleArray = [];
+  const [rootNote, setRootNote] = useState(0)
+  const [mode, setMode] = useState(0)
 
- 
-
-
-  function convertKey(interval) {
-    let x = currentKey + interval;
-    if (x > 12) {
-      x = x - 12;
-    }
-    return x;
-  }
-
-  function convertScaleIntervals(interval) {
-    let x = scaleDegree + interval;
-    if (x > 7) {
-      x = x - 7;
-    }
-    return x;
-  }
-
-  function applyIntervalSteps(numOfDegrees) {
-    let x = 0;
-    for (let i = 0; i < numOfDegrees; i++) {
-      let sdi = scaleDegree + i;
-      if (sdi > 7) {
-        sdi = sdi - 7;
-      }
-      x = x + intervalSteps[sdi];
-    }
-    return x;
-  }
-
-  function pushToCurrentScaleArray(degree){
-    currentScaleArray.push(String(intToKey[convertKey(applyIntervalSteps(degree))]))
-
-  }
-
-
-  const KeyButton = ({ id, keyName, isActive, value }) => {
-    return (
-      <button
-        id={id}
-        value={value}
-        type="button"
-        className={
-          isActive
-            ? "keyButton btn btn-secondary buttonActive rounded-0"
-            : "keyButton btn btn-secondary rounded-0"
-        }
-        onClick={(e) => {
-          setCurrentKey(Number(e.target.value));
-          setActive(Number(e.target.value));
-          currentScaleArray=[];
-        }}
-      >
-        {keyName}
-      </button>
-    );
-  };
-
-  const ScaleButton = ({
-    id,
-    scaleName,
-    isActiveScale,
-    value,
-    scaleDegree,
-  }) => {
-    return (
-      <button
-        id={id}
-        value={value}
-        type="button"
-        className={
-          isActiveScale
-            ? "scaleButton btn btn-secondary buttonActive rounded-0"
-            : "scaleButton btn btn-secondary rounded-0"
-        }
-        onClick={(e) => {
-          // setCurrentScale(Number(e.target.value));
-          setActiveScale(Number(e.target.value));
-          setScaleDegree(scaleDegree);
-          currentScaleArray = [];
-        }}
-      >
-        {scaleName}
-      </button>
-    );
-  };
-
-  const currentDate = new Date();
-  let currentYear = currentDate.getFullYear();
+  const triads = getTriads(rootNote, mode)
+  const spelled = spellScale(rootNote, mode)
 
   return (
-    <div className="container App raleway-body">
-      <div style={{ display: "none" }}>
-        <h1>
-          Convert and find chords for scales and modes for guitar. Chord
-          converter. Chord finder. Scale converter. Scale finder. Mode
-          converter. Mode finder. Online music theory chord scale mode finder
-          converter tool for guitar.
-        </h1>
-      </div>
-      <div style={{ display: "none" }}>
-        <h2>
-          Tonic root key scale degree chord mode finder converter tool. Find and
-          convert mode scale key.
-        </h2>
-      </div>
-      <nav className="navbar">
-        <div className="container-fluid">
-          <div className="navbar-brand">
-            <a href="https://robotlions.com">
-            <img
-              src={bannerImage}
-              height="100"
-              width="100"
-              className="img-fluid"
-              alt="robot lion"
-            /></a>
+    <>
+      <nav className="navbar bg-body-tertiary mb-4">
+        <div className="container d-flex justify-content-between align-items-center">
+          <div className="d-flex align-items-center gap-3">
+            <img src="/robotLionsGuitar.jpg" alt="Robot Lions" style={{ height: '40px' }} className="rounded" />
+            <span className="navbar-brand mb-0" style={{ fontSize: '1.5rem', fontWeight: 800, color: '#333333' }}>Scale-O-Matic 3000</span>
           </div>
-            <div className="navbar-nav">
-              <a className="nav-link" aria-current="page" href="https://robotlions.com">
-                robotlions.com
-              </a>
-            </div>
+          <a href="https://robotlions.com" target="_blank" rel="noopener noreferrer" className="text-decoration-none text-muted">robotlions.com</a>
         </div>
       </nav>
 
-      <div className="row" style={{marginTop:50}}>
-        <h2 className="raleway-headline">Scale-O-Matic 3000</h2>
-        <h5 className="raleway-headline" style={{marginBottom:50}}>Chord Finder and Conversion Tool for Scales, Keys and Modes</h5>
-        <br/>
-      <h4 className="raleway-headline">Tonic</h4>
+      <div className="offcanvas offcanvas-start" tabIndex="-1" id="settingsOffcanvas" aria-labelledby="settingsOffcanvasLabel">
+        <div className="offcanvas-header">
+          <button type="button" className="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div className="offcanvas-body">
+          <div className="mb-4">
+            <h6 className="text-uppercase fw-semibold text-muted mb-3">Root Note</h6>
+            <div className="d-flex flex-wrap gap-2">
+              {NOTES.map((note, i) => (
+                <button
+                  key={note}
+                  className={`btn btn-outline-secondary rounded-circle note-btn ${i === rootNote ? ' active' : ''}`}
+                  onClick={() => setRootNote(i)}
+                >
+                  {note}
+                </button>
+              ))}
+            </div>
+          </div>
 
-        <div className="col">
-          {keyArray.map((item) => (
-            <KeyButton
-              isActive={active === item.idNo}
-              keyName={item.keyName}
-              value={item.idNo}
-              key={item.idNo}
-            />
-          ))}
+          <div className="mb-4">
+            <h6 className="text-uppercase fw-semibold text-muted mb-3">Mode</h6>
+            <div className="d-flex flex-wrap gap-2">
+              {MODES.map((m, i) => (
+                <button
+                  key={m.name}
+                  className={`btn btn-outline-secondary rounded-pill mode-btn${i === mode ? ' active' : ''}`}
+                  onClick={() => setMode(i)}
+                >
+                  {m.name}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
-      <br />
-      <br />
-      <div className="row"><h4 className="raleway-headline">Mode</h4></div>
 
-      <div className="row">
-        <div className="col">
-          {scaleArray.map((item) => (
-            <ScaleButton
-              isActiveScale={activeScale === item.idNo}
-              scaleName={item.scaleName}
-              value={item.idNo}
-              scaleDegree={item.scaleDegree}
-              key={item.idNo}
-            />
-          ))}
-        </div>
-      </div>
-      
-     
-      <br />
-      <br />
-      <div className="row"><h4 className="raleway-headline">Chords in {intToKey[currentKey]} {intToScale[activeScale]}</h4></div>
-      <div className="row justify-content-center">
-        <div className="col-3 col-lg-1 panelWrapper">
-          <div className="intervalHeader">
-            <p className="intervalHeaderText">1</p>
-          </div>
-          <div className="intervalBody d-flex align-items-center justify-content-center">
-            <p className="intervalBodyText">
-              {intToKey[currentKey]} {"\n"}
-              {minorSteps[convertScaleIntervals(0)]}
-              {pushToCurrentScaleArray(0)}
-            </p>
-          </div>
-        </div>
+      <div className="container py-4">
+          <button
+            style={{ fontSize: 'small' }}
+              className="btn btn-outline-secondary key-btn"
+              type="button"
+              data-bs-toggle="offcanvas"
+              data-bs-target="#settingsOffcanvas"
+            >
+              <i className="bi bi-list"></i>&nbsp;Change Key
+            </button>
+        <h2 className="fw-bold text-secondary text-center mb-2">{NOTES[rootNote]} {MODES[mode].name}</h2>
 
-        <div className="col-3 col-lg-1 panelWrapper">
-          <div className="intervalHeader">
-            <p className="intervalHeaderText">2</p>
-          </div>
-          <div className="intervalBody d-flex align-items-center justify-content-center">
-            <p className="intervalBodyText">
-            {intToKey[convertKey(applyIntervalSteps(1))]}{"\n"}
-              {minorSteps[convertScaleIntervals(1)]}
-              {pushToCurrentScaleArray(1)}
-            </p>
+        <div className="mb-5">
+          <div className="d-flex flex-wrap justify-content-center gap-2">
+            {spelled.map((note, i) => (
+              <span style={{ fontWeight: 'bold' }} key={i} className="fs-4 px-3 py-2">{note}</span>
+            ))}
           </div>
         </div>
 
-        <div className="col-3 col-lg-1 panelWrapper">
-          <div className="intervalHeader">
-            <p className="intervalHeaderText">3</p>
+        <div className="mb-5">
+        
+          <h2 className="h6 text-uppercase fw-semibold text-muted mb-3 text-center">Triads in {NOTES[rootNote]} {MODES[mode].name}</h2>
+          <div className="row g-3 justify-content-center triads">
+            {triads.map((triad) => (
+              <div key={triad.numeral} className="col-6 col-md-auto">
+                <div className={`card h-100 text-center triad-card ${triad.quality}`}>
+                  <div className="card-body">
+                    <h6 className="card-title mb-1 triad-numeral">{triad.numeral}</h6>
+                    <p className="card-text fw-medium mb-1 triad-name">{triad.name}</p>
+                    <p className="card-text small text-muted mb-0 triad-notes">{triad.notes.join(' - ')}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="intervalBody d-flex align-items-center justify-content-center">
-            <p className="intervalBodyText">
-            {intToKey[convertKey(applyIntervalSteps(2))]}{"\n"}
-              {minorSteps[convertScaleIntervals(2)]}
-              {pushToCurrentScaleArray(2)}            </p>
-          </div>
+        
         </div>
-
-        <div className="col-3 col-lg-1 panelWrapper">
-          <div className="intervalHeader">
-            <p className="intervalHeaderText">4</p>
+          <div className="d-flex flex-wrap justify-content-center gap-3 mb-3">
+            <span className="triad-key"><span className="triad-key-swatch M"></span>Major</span>
+            <span className="triad-key"><span className="triad-key-swatch m"></span>Minor</span>
+            <span className="triad-key"><span className="triad-key-swatch dim"></span>Diminished</span>
+            <span className="triad-key"><span className="triad-key-swatch aug"></span>Augmented</span>
           </div>
-          <div className="intervalBody d-flex align-items-center justify-content-center">
-            <p className="intervalBodyText">
-            {intToKey[convertKey(applyIntervalSteps(3))]}{"\n"}
-              {minorSteps[convertScaleIntervals(3)]}
-              {pushToCurrentScaleArray(3)}
-            </p>
-          </div>
-        </div>
-        <div className="col-3 col-lg-1 panelWrapper">
-          <div className="intervalHeader">
-            <p className="intervalHeaderText">5</p>
-          </div>
-          <div className="intervalBody d-flex align-items-center justify-content-center">
-            <p className="intervalBodyText">
-            {intToKey[convertKey(applyIntervalSteps(4))]}{"\n"}
-              {minorSteps[convertScaleIntervals(4)]}
-              {pushToCurrentScaleArray(4)}
-            </p>
-          </div>
-        </div>
-        <div className="col-3 col-lg-1 panelWrapper">
-          <div className="intervalHeader">
-            <p className="intervalHeaderText">6</p>
-          </div>
-          <div className="intervalBody d-flex align-items-center justify-content-center">
-            <p className="intervalBodyText">
-            {intToKey[convertKey(applyIntervalSteps(5))]}{"\n"}
-              {minorSteps[convertScaleIntervals(5)]}
-              {pushToCurrentScaleArray(5)}
-            </p>
-          </div>
-        </div>
-        <div className="col-3 col-lg-1 panelWrapper">
-          <div className="intervalHeader">
-            <p className="intervalHeaderText">7</p>
-          </div>
-          <div className="intervalBody d-flex align-items-center justify-content-center">
-            {currentScaleArray[5] ? 
-            <p className="intervalBodyText">
-            {intToKey[convertKey(applyIntervalSteps(6))]}{"\n"}
-              {minorSteps[convertScaleIntervals(6)]}
-              {pushToCurrentScaleArray(6)} 
-            </p> : null
-}
-          </div>
-        </div>
-        <div className="row" style={{marginTop:30}}>
-        <div className="col">
-          <h4 className="raleway-headline">Notes in {intToKey[currentKey]} {intToScale[activeScale]} Scale</h4>
-          {intToKey[currentKey]} - {intToKey[convertKey(applyIntervalSteps(1))]} - {intToKey[convertKey(applyIntervalSteps(2))]} - {intToKey[convertKey(applyIntervalSteps(3))]} - {intToKey[convertKey(applyIntervalSteps(4))]} - {intToKey[convertKey(applyIntervalSteps(5))]} - {intToKey[convertKey(applyIntervalSteps(6))]}
-        </div>
+        
       </div>
-    
-      <div className="row" style={{marginTop:30}}>
-        <div className="col">
-          <h4 className="raleway-headline">Notes in {intToKey[currentKey]} Triad in {intToScale[activeScale]}</h4>
-          {intToKey[currentKey]} - {intToKey[convertKey(applyIntervalSteps(2))]} - {intToKey[convertKey(applyIntervalSteps(4))]}
-        </div>
+      <div className="text-center py-4 text-muted small">
+         <button
+              className="btn btn-outline-secondary"
+              type="button"
+              data-bs-toggle="offcanvas"
+              data-bs-target="#settingsOffcanvas"
+            >
+              <i className="bi bi-list"></i>&nbsp;Change Key
+            </button>
       </div>
+      <div className="text-center py-4 text-muted small">
+        &copy; {new Date().getFullYear()} by <a href="https://chadmusick.com" className="text-decoration-none text-primary">Chad Musick</a>
       </div>
-      <p style={{marginTop:30}}>Are you learning the guitar and need to memorize the fretboard? Try our <a href="https://guitartrainer.robotlions.com"> fretboard training app</a>.</p>
-      <p style={{marginTop:50}}>© {currentYear} by <a href="https://chadmusick.com/">Chad Musick</a></p>
-{console.log(currentScaleArray)}
-    </div>
-  );
+    </>
+  )
 }
 
-export default App;
+export default App
