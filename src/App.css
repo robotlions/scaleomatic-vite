@@ -48,6 +48,11 @@
   font-family: var(--bs-font-monospace);
 }
 
+.triad-seventh {
+  font-family: var(--bs-font-monospace);
+  color: #a04040;
+}
+
 .triad-key {
   display: inline-flex;
   align-items: center;

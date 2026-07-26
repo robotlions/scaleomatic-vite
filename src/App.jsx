@@ -62,11 +62,14 @@ function getTriads(rootNote, mode) {
       ? ROMAN[i]
       : ROMAN[i].toLowerCase()
 
+    const seventh = (i + 6) % 7
+
     return {
       numeral: quality === 'dim' ? roman + '\u00B0' : quality === 'aug' ? roman + '+' : roman,
       root: spelled[i],
       name: spelled[i] + QUALITY_SUFFIX[quality],
       notes: [spelled[i], spelled[third], spelled[fifth]],
+      seventh: spelled[seventh],
       quality,
       qualityLabel: QUALITY_SYMBOL[quality],
     }
@@ -76,6 +79,7 @@ function getTriads(rootNote, mode) {
 function App() {
   const [rootNote, setRootNote] = useState(0)
   const [mode, setMode] = useState(0)
+  const [show7th, setShow7th] = useState(false)
 
   const triads = getTriads(rootNote, mode)
   const spelled = spellScale(rootNote, mode)
@@ -151,7 +155,20 @@ function App() {
 
         <div className="mb-5">
         
-          <h2 className="h6 text-uppercase fw-semibold text-muted mb-3 text-center">Triads in {NOTES[rootNote]} {MODES[mode].name}</h2>
+          <div className="d-flex justify-content-center align-items-center mb-3">
+            <h2 className="h6 text-uppercase fw-semibold text-muted mb-0">Triads in {NOTES[rootNote]} {MODES[mode].name}</h2>
+            <div className="form-check form-switch mb-0 mx-5">
+              <input
+                className="form-check-input"
+                type="checkbox"
+                role="switch"
+                id="show7thToggle"
+                checked={show7th}
+                onChange={(e) => setShow7th(e.target.checked)}
+              />
+              <label className="form-check-label" htmlFor="show7thToggle">Show 7th</label>
+            </div>
+          </div>
           <div className="row g-3 justify-content-center triads">
             {triads.map((triad) => (
               <div key={triad.numeral} className="col-6 col-md-auto">
@@ -159,22 +176,21 @@ function App() {
                   <div className="card-body">
                     <h6 className="card-title mb-1 triad-numeral">{triad.numeral}</h6>
                     <p className="card-text fw-medium mb-1 triad-name">{triad.name}</p>
-                    <p className="card-text small text-muted mb-0 triad-notes">{triad.notes.join(' - ')}</p>
+                    <p className="card-text small text-muted mb-0 triad-notes">{triad.notes.join(' - ')}{show7th && <span className="triad-seventh"> - {triad.seventh}</span>}</p>
                   </div>
                 </div>
               </div>
             ))}
           </div>
         
-        </div>
+          </div>
           <div className="d-flex flex-wrap justify-content-center gap-3 mb-3">
             <span className="triad-key"><span className="triad-key-swatch M"></span>Major</span>
             <span className="triad-key"><span className="triad-key-swatch m"></span>Minor</span>
             <span className="triad-key"><span className="triad-key-swatch dim"></span>Diminished</span>
             <span className="triad-key"><span className="triad-key-swatch aug"></span>Augmented</span>
           </div>
-        
-      </div>
+        </div>
       <div className="text-center py-4 text-muted small">
          <button
               className="btn btn-outline-secondary"
