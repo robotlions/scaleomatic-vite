@@ -13,6 +13,12 @@
   font-weight: bold;
 }
 
+.triads-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 1rem;
+}
+
 .triad-card {
   transition: all 0.15s ease;
 

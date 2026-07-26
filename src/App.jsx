@@ -169,17 +169,15 @@ function App() {
               <label className="form-check-label" htmlFor="show7thToggle">Show 7th</label>
             </div>
           </div>
-          <div className="row g-3 justify-content-center triads">
+          <div className="triads-grid">
             {triads.map((triad) => (
-              <div key={triad.numeral} className="col-6 col-md-auto">
-                <div className={`card h-100 text-center triad-card ${triad.quality}`}>
+                <div key={triad.numeral} className={`card h-100 text-center triad-card ${triad.quality}`}>
                   <div className="card-body">
                     <h6 className="card-title mb-1 triad-numeral">{triad.numeral}</h6>
                     <p className="card-text fw-medium mb-1 triad-name">{triad.name}</p>
                     <p className="card-text small text-muted mb-0 triad-notes">{triad.notes.join(' - ')}{show7th && <span className="triad-seventh"> - {triad.seventh}</span>}</p>
                   </div>
                 </div>
-              </div>
             ))}
           </div>
         
