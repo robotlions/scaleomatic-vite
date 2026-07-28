@@ -415,7 +415,7 @@ function App() {
               </div>
             ))}
           </div>
-          {selectedTriad !== null && (
+          {selectedTriad !== null ? (
             <div className="piano-wrap mb-5">
               <h6 className="text-uppercase fw-semibold text-muted text-center mb-2">
                 {triads[selectedTriad].name} &mdash;{" "}
@@ -440,6 +440,10 @@ function App() {
                 </button>
               </div>
             </div>
+          ) : (
+            <p className="text-center text-muted fst-italic mb-5">
+              Click on a triad to see it on piano.
+            </p>
           )}
         </div>
         <div className="d-flex flex-wrap justify-content-center gap-3 mb-3">
