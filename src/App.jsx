@@ -81,6 +81,146 @@ function spellScale(rootNote, mode) {
   return scaleNotes.map((note, i) => spellNote(note, (rootLetter + i) % 7));
 }
 
+const LETTER_INDEX = { C: 0, D: 1, E: 2, F: 3, G: 4, A: 5, B: 6 };
+
+function noteToChromatic(spelled) {
+  const letter = spelled[0];
+  const accidental = spelled.slice(1);
+  let chrom = LETTER_NATURAL[LETTER_INDEX[letter]];
+  if (accidental === "#") chrom = (chrom + 1) % 12;
+  else if (accidental === "b") chrom = (chrom + 11) % 12;
+  else if (accidental === "##" || accidental === "x") chrom = (chrom + 2) % 12;
+  else if (accidental === "bb") chrom = (chrom + 10) % 12;
+  return chrom;
+}
+
+const WHITE_SEMITONES = [0, 2, 4, 5, 7, 9, 11];
+const WHITE_LETTERS = ["C", "D", "E", "F", "G", "A", "B"];
+const BLACK_DEFS = [
+  { afterWhite: 0, offset: 1 },
+  { afterWhite: 1, offset: 3 },
+  { afterWhite: 3, offset: 6 },
+  { afterWhite: 4, offset: 8 },
+  { afterWhite: 5, offset: 10 },
+];
+
+function PianoChord({ triad, show7th }) {
+  const rootChrom = noteToChromatic(triad.root);
+  const notes = triad.notes.map(noteToChromatic);
+  const seventhChrom = noteToChromatic(triad.seventh);
+  const offsets = notes.map((c) => (c - rootChrom + 12) % 12);
+  const seventhOffset = (seventhChrom - rootChrom + 12) % 12;
+
+  const startWhiteIdx = (() => {
+    let idx = 0;
+    for (let i = 0; i < WHITE_SEMITONES.length; i++) {
+      if (WHITE_SEMITONES[i] <= rootChrom) idx = i;
+    }
+    return idx;
+  })();
+  const pressed = new Set([
+    rootChrom,
+    rootChrom + offsets[1],
+    rootChrom + offsets[2],
+  ]);
+  if (show7th) pressed.add(rootChrom + seventhOffset);
+
+  const KEY_W = 40;
+  const KEY_H = 160;
+  const BLACK_W = 24;
+  const BLACK_H = 100;
+  const WHITE_COUNT = 8;
+
+  const whiteKeys = [];
+  for (let k = 0; k < WHITE_COUNT; k++) {
+    const oct = Math.floor((startWhiteIdx + k) / 7);
+    const within = (startWhiteIdx + k) % 7;
+    const semitone = oct * 12 + WHITE_SEMITONES[within];
+    whiteKeys.push({
+      x: k * KEY_W,
+      semitone,
+      letter: WHITE_LETTERS[within],
+      pressed: pressed.has(semitone),
+    });
+  }
+
+  const blackKeys = [];
+  for (let k = 0; k < WHITE_COUNT; k++) {
+    const oct = Math.floor((startWhiteIdx + k) / 7);
+    const within = (startWhiteIdx + k) % 7;
+    const black = BLACK_DEFS.find((b) => b.afterWhite === within);
+    if (!black) continue;
+    const semitone = oct * 12 + WHITE_SEMITONES[within] + 1;
+    blackKeys.push({
+      x: (k + 1) * KEY_W - BLACK_W / 2,
+      semitone,
+      letter: WHITE_LETTERS[within] + "#",
+      pressed: pressed.has(semitone),
+    });
+  }
+
+  const totalWidth = WHITE_COUNT * KEY_W;
+  const PRESSED = "#888888";
+
+  return (
+    <svg
+      className="piano-chord"
+      viewBox={`0 0 ${totalWidth} ${KEY_H}`}
+      preserveAspectRatio="xMidYMid meet"
+      aria-label={`Piano showing ${triad.name}`}
+    >
+      {whiteKeys.map((wk, i) => (
+        <g key={`w${i}`}>
+          <rect
+            x={wk.x}
+            y={0}
+            width={KEY_W}
+            height={KEY_H}
+            rx={3}
+            fill={wk.pressed ? PRESSED : "#ffffff"}
+            stroke="#333"
+            strokeWidth={1}
+          />
+          <text
+            x={wk.x + KEY_W / 2}
+            y={KEY_H - 10}
+            textAnchor="middle"
+            fontSize={13}
+            fontFamily="var(--bs-font-monospace)"
+            fill={wk.pressed ? "#ffffff" : "#000000"}
+          >
+            {wk.letter}
+          </text>
+        </g>
+      ))}
+      {blackKeys.map((bk, i) => (
+        <g key={`b${i}`}>
+          <rect
+            x={bk.x}
+            y={0}
+            width={BLACK_W}
+            height={BLACK_H}
+            rx={2}
+            fill={bk.pressed ? PRESSED : "#111111"}
+            stroke="#000"
+            strokeWidth={1}
+          />
+          <text
+            x={bk.x + BLACK_W / 2}
+            y={BLACK_H - 8}
+            textAnchor="middle"
+            fontSize={11}
+            fontFamily="var(--bs-font-monospace)"
+            fill="#ffffff"
+          >
+            {bk.letter}
+          </text>
+        </g>
+      ))}
+    </svg>
+  );
+}
+
 function getTriads(rootNote, mode) {
   const qualities = MODES[mode].qualities;
   const scaleNotes = getScaleNotes(rootNote, mode);
@@ -118,6 +258,7 @@ function App() {
   const [rootNote, setRootNote] = useState(0);
   const [mode, setMode] = useState(0);
   const [show7th, setShow7th] = useState(false);
+  const [selectedTriad, setSelectedTriad] = useState(null);
 
   const triads = getTriads(rootNote, mode);
   const spelled = spellScale(rootNote, mode);
@@ -249,10 +390,13 @@ function App() {
             </div>
           </div>
           <div className="triads-grid">
-            {triads.map((triad) => (
+            {triads.map((triad, i) => (
               <div
                 key={triad.numeral}
-                className={`card h-100 text-center triad-card ${triad.quality}`}
+                className={`card h-100 text-center triad-card ${triad.quality}${i === selectedTriad ? " selected" : ""}`}
+                onClick={() =>
+                  setSelectedTriad((prev) => (prev === i ? null : i))
+                }
               >
                 <div className="card-body">
                   <h6 className="card-title mb-1 triad-numeral">
@@ -271,6 +415,32 @@ function App() {
               </div>
             ))}
           </div>
+          {selectedTriad !== null && (
+            <div className="piano-wrap mb-5">
+              <h6 className="text-uppercase fw-semibold text-muted text-center mb-2">
+                {triads[selectedTriad].name} &mdash;{" "}
+                {triads[selectedTriad].notes.join(" - ")}
+                {show7th && (
+                  <span className="piano-seventh">
+                    {" "}
+                    - {triads[selectedTriad].seventh}
+                  </span>
+                )}
+              </h6>
+              <PianoChord
+                triad={triads[selectedTriad]}
+                show7th={show7th}
+              />
+              <div className="text-center mt-2">
+                <button
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={() => setSelectedTriad(null)}
+                >
+                  Clear
+                </button>
+              </div>
+            </div>
+          )}
         </div>
         <div className="d-flex flex-wrap justify-content-center gap-3 mb-3">
           <span className="triad-key">
