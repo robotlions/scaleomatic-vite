@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./App.css";
 
 const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -260,6 +260,16 @@ function App() {
   const [show7th, setShow7th] = useState(false);
   const [selectedTriad, setSelectedTriad] = useState(null);
 
+  const modalRef = useRef(null);
+
+  useEffect(() => {
+    const modalEl = modalRef.current;
+    if (!modalEl) return;
+    const onHide = () => setSelectedTriad(null);
+    modalEl.addEventListener("hidden.bs.modal", onHide);
+    return () => modalEl.removeEventListener("hidden.bs.modal", onHide);
+  }, []);
+
   const triads = getTriads(rootNote, mode);
   const spelled = spellScale(rootNote, mode);
 
@@ -342,10 +352,10 @@ function App() {
       </div>
 
       <div className="container py-4">
-        <h2 className="fw-bold text-primary text-center mb-2">
+        <h2 className="fw-bold text-primary text-center mb-1">
           {NOTES[rootNote]} {MODES[mode].name}
         </h2>
-        <div className="text-center mb-4">
+        <div className="text-center mb-1">
           <button
             style={{ fontSize: "small" }}
             className="btn btn-outline-secondary key-btn mx-3"
@@ -356,7 +366,7 @@ function App() {
             Change Key
           </button>
         </div>
-        <div className="mb-5">
+        <div className="mb-3">
           <div className="d-flex flex-wrap justify-content-center gap-2">
             {spelled.map((note, i) => (
               <span
@@ -389,14 +399,15 @@ function App() {
               </label>
             </div>
           </div>
+          
           <div className="triads-grid">
             {triads.map((triad, i) => (
               <div
                 key={triad.numeral}
                 className={`card h-100 text-center triad-card ${triad.quality}${i === selectedTriad ? " selected" : ""}`}
-                onClick={() =>
-                  setSelectedTriad((prev) => (prev === i ? null : i))
-                }
+                data-bs-toggle="modal"
+                data-bs-target="#pianoModal"
+                onClick={() => setSelectedTriad(i)}
               >
                 <div className="card-body">
                   <h6 className="card-title mb-1 triad-numeral">
@@ -415,38 +426,8 @@ function App() {
               </div>
             ))}
           </div>
-          {selectedTriad !== null ? (
-            <div className="piano-wrap mb-5">
-              <h6 className="text-uppercase fw-semibold text-muted text-center mb-2">
-                {triads[selectedTriad].name} &mdash;{" "}
-                {triads[selectedTriad].notes.join(" - ")}
-                {show7th && (
-                  <span className="piano-seventh">
-                    {" "}
-                    - {triads[selectedTriad].seventh}
-                  </span>
-                )}
-              </h6>
-              <PianoChord
-                triad={triads[selectedTriad]}
-                show7th={show7th}
-              />
-              <div className="text-center mt-2">
-                <button
-                  className="btn btn-sm btn-outline-secondary"
-                  onClick={() => setSelectedTriad(null)}
-                >
-                  Clear
-                </button>
-              </div>
-            </div>
-          ) : (
-            <p className="text-center text-muted fst-italic mb-5">
-              Click on a triad to see it on piano.
-            </p>
-          )}
-        </div>
-        <div className="d-flex flex-wrap justify-content-center gap-3 mb-3">
+          <br/>
+          <div className="d-flex flex-wrap justify-content-center gap-3 mb-3">
           <span className="triad-key">
             <span className="triad-key-swatch M"></span>Major
           </span>
@@ -459,6 +440,60 @@ function App() {
           <span className="triad-key">
             <span className="triad-key-swatch aug"></span>Augmented
           </span>
+        </div>
+        <br/>
+          {selectedTriad !== null ? (
+            <p className="text-center text-muted fst-italic mb-0">
+              Showing piano for {triads[selectedTriad].name}.
+            </p>
+          ) : (
+            <p className="text-center text-muted fst-italic mb-0">
+              Click on a triad to see it on piano.
+            </p>
+          )}
+        </div>
+
+        <div
+          className="modal fade"
+          id="pianoModal"
+          tabIndex="-1"
+          ref={modalRef}
+          aria-hidden="true"
+        >
+          <div className="modal-dialog modal-dialog-centered">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">
+                  {selectedTriad !== null && (
+                    <>
+                      {triads[selectedTriad].name} &mdash;{" "}
+                      {triads[selectedTriad].notes.join(" - ")}
+                      {show7th && (
+                        <span className="piano-seventh">
+                          {" "}
+                          - {triads[selectedTriad].seventh}
+                        </span>
+                      )}
+                    </>
+                  )}
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  data-bs-dismiss="modal"
+                  aria-label="Close"
+                ></button>
+              </div>
+              <div className="modal-body">
+                {selectedTriad !== null && (
+                  <PianoChord
+                    triad={triads[selectedTriad]}
+                    show7th={show7th}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
      
