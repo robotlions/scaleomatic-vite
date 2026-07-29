@@ -49,6 +49,7 @@ const MODES = [
 const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII"];
 
 const QUALITY_SUFFIX = { M: "", m: "m", dim: "dim", aug: "aug" };
+const QUALITY_SUFFIX_7 = { M: "7", m: "m7", dim: "dim7", aug: "aug7" };
 const QUALITY_SYMBOL = { M: "maj", m: "m", dim: "dim", aug: "aug" };
 
 function getScaleNotes(rootNote, mode) {
@@ -125,6 +126,18 @@ function PianoChord({ triad, show7th }) {
   ]);
   if (show7th) pressed.add(rootChrom + seventhOffset);
 
+  const labelBySemitone = {
+    [rootChrom]: triad.root,
+    [rootChrom + offsets[1]]: triad.notes[1],
+    [rootChrom + offsets[2]]: triad.notes[2],
+  };
+  if (show7th) labelBySemitone[rootChrom + seventhOffset] = triad.seventh;
+
+  const chordTones = show7th
+    ? [...triad.notes, triad.seventh]
+    : triad.notes;
+  const useFlats = chordTones.some((n) => n.includes("b"));
+
   const KEY_W = 40;
   const KEY_H = 160;
   const BLACK_W = 24;
@@ -139,7 +152,7 @@ function PianoChord({ triad, show7th }) {
     whiteKeys.push({
       x: k * KEY_W,
       semitone,
-      letter: WHITE_LETTERS[within],
+      letter: labelBySemitone[semitone] ?? WHITE_LETTERS[within],
       pressed: pressed.has(semitone),
     });
   }
@@ -154,7 +167,11 @@ function PianoChord({ triad, show7th }) {
     blackKeys.push({
       x: (k + 1) * KEY_W - BLACK_W / 2,
       semitone,
-      letter: WHITE_LETTERS[within] + "#",
+      letter:
+      labelBySemitone[semitone] ??
+      (useFlats
+        ? WHITE_LETTERS[(within + 1) % 7] + "b"
+        : WHITE_LETTERS[within] + "#"),
       pressed: pressed.has(semitone),
     });
   }
@@ -167,7 +184,7 @@ function PianoChord({ triad, show7th }) {
       className="piano-chord"
       viewBox={`0 0 ${totalWidth} ${KEY_H}`}
       preserveAspectRatio="xMidYMid meet"
-      aria-label={`Piano showing ${triad.name}`}
+      aria-label={`Piano showing ${show7th ? triad.name7 : triad.name}`}
     >
       {whiteKeys.map((wk, i) => (
         <g key={`w${i}`}>
@@ -226,6 +243,8 @@ function getTriads(rootNote, mode) {
   const scaleNotes = getScaleNotes(rootNote, mode);
   const spelled = spellScale(rootNote, mode);
 
+  const rootLetter = CHROMATIC_TO_LETTER[rootNote];
+
   return scaleNotes.map((note, i) => {
     const third = (i + 2) % 7;
     const fifth = (i + 4) % 7;
@@ -235,7 +254,10 @@ function getTriads(rootNote, mode) {
         ? ROMAN[i]
         : ROMAN[i].toLowerCase();
 
-    const seventh = (i + 6) % 7;
+    const seventhLetter = (rootLetter + i + 6) % 7;
+    const seventhSemitone = quality === "dim" ? 9 : 10;
+    const seventhChrom = (note + seventhSemitone) % 12;
+    const seventh = spellNote(seventhChrom, seventhLetter);
 
     return {
       numeral:
@@ -246,8 +268,9 @@ function getTriads(rootNote, mode) {
             : roman,
       root: spelled[i],
       name: spelled[i] + QUALITY_SUFFIX[quality],
+      name7: spelled[i] + QUALITY_SUFFIX_7[quality],
       notes: [spelled[i], spelled[third], spelled[fifth]],
-      seventh: spelled[seventh],
+      seventh: seventh,
       quality,
       qualityLabel: QUALITY_SYMBOL[quality],
     };
@@ -414,7 +437,7 @@ function App() {
                     {triad.numeral}
                   </h6>
                   <p className="card-text fw-medium mb-1 triad-name">
-                    {triad.name}
+                    {show7th ? triad.name7 : triad.name}
                   </p>
                   <p className="card-text small text-muted mb-0 triad-notes">
                     {triad.notes.join(" - ")}
@@ -444,7 +467,8 @@ function App() {
         <br/>
           {selectedTriad !== null ? (
             <p className="text-center text-muted fst-italic mb-0">
-              Showing piano for {triads[selectedTriad].name}.
+              Showing piano for{" "}
+              {show7th ? triads[selectedTriad].name7 : triads[selectedTriad].name}.
             </p>
           ) : (
             <p className="text-center text-muted fst-italic mb-0">
@@ -466,7 +490,7 @@ function App() {
                 <h5 className="modal-title">
                   {selectedTriad !== null && (
                     <>
-                      {triads[selectedTriad].name} &mdash;{" "}
+                      {show7th ? triads[selectedTriad].name7 : triads[selectedTriad].name} &mdash;{" "}
                       {triads[selectedTriad].notes.join(" - ")}
                       {show7th && (
                         <span className="piano-seventh">
