@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { Tooltip } from "bootstrap";
 import "./App.css";
 
 const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
@@ -133,9 +134,7 @@ function PianoChord({ triad, show7th }) {
   };
   if (show7th) labelBySemitone[rootChrom + seventhOffset] = triad.seventh;
 
-  const chordTones = show7th
-    ? [...triad.notes, triad.seventh]
-    : triad.notes;
+  const chordTones = show7th ? [...triad.notes, triad.seventh] : triad.notes;
   const useFlats = chordTones.some((n) => n.includes("b"));
 
   const KEY_W = 40;
@@ -168,10 +167,10 @@ function PianoChord({ triad, show7th }) {
       x: (k + 1) * KEY_W - BLACK_W / 2,
       semitone,
       letter:
-      labelBySemitone[semitone] ??
-      (useFlats
-        ? WHITE_LETTERS[(within + 1) % 7] + "b"
-        : WHITE_LETTERS[within] + "#"),
+        labelBySemitone[semitone] ??
+        (useFlats
+          ? WHITE_LETTERS[(within + 1) % 7] + "b"
+          : WHITE_LETTERS[within] + "#"),
       pressed: pressed.has(semitone),
     });
   }
@@ -293,6 +292,27 @@ function App() {
     return () => modalEl.removeEventListener("hidden.bs.modal", onHide);
   }, []);
 
+  useEffect(() => {
+    const tooltipTriggerList = document.querySelectorAll(
+      '[data-bs-toggle="tooltip"]',
+    );
+    const entries = [...tooltipTriggerList].map((el) => {
+      const tooltip = new Tooltip(el);
+      const onClick = (e) => {
+        e.preventDefault();
+        tooltip.show();
+      };
+      el.addEventListener("click", onClick);
+      return { tooltip, el, onClick };
+    });
+    return () => {
+      entries.forEach(({ tooltip, el, onClick }) => {
+        el.removeEventListener("click", onClick);
+        tooltip.dispose();
+      });
+    };
+  });
+
   const triads = getTriads(rootNote, mode);
   const spelled = spellScale(rootNote, mode);
 
@@ -381,7 +401,7 @@ function App() {
         <div className="text-center mb-1">
           <button
             style={{ fontSize: "small" }}
-            className="btn btn-outline-secondary key-btn mx-3"
+            className="btn btn-secondary key-btn mx-3"
             type="button"
             data-bs-toggle="offcanvas"
             data-bs-target="#settingsOffcanvas"
@@ -389,6 +409,14 @@ function App() {
             Change Key
           </button>
         </div>
+
+        <div className="row mb-1 mt-5">
+            <div className="col text-center">
+              <h2 className="h6 text-uppercase fw-semibold text-muted mb-0">
+                Notes in {NOTES[rootNote]} {MODES[mode].name}
+              </h2>
+            </div>
+          </div>
         <div className="mb-3">
           <div className="d-flex flex-wrap justify-content-center gap-2">
             {spelled.map((note, i) => (
@@ -404,25 +432,14 @@ function App() {
         </div>
 
         <div className="mb-5">
-          <div className="d-flex justify-content-center align-items-center mb-3">
-            <h2 className="h6 text-uppercase fw-semibold text-muted mb-0">
-              Triads in {NOTES[rootNote]} {MODES[mode].name}
-            </h2>
-            <div className="form-check form-switch mb-0 mx-5">
-              <input
-                className="form-check-input"
-                type="checkbox"
-                role="switch"
-                id="show7thToggle"
-                checked={show7th}
-                onChange={(e) => setShow7th(e.target.checked)}
-              />
-              <label className="form-check-label" htmlFor="show7thToggle">
-                Show 7th
-              </label>
+          <div className="row mb-3">
+            <div className="col text-center">
+              <h2 className="h6 text-uppercase fw-semibold text-muted mb-0">
+                Triads in {NOTES[rootNote]} {MODES[mode].name}
+              </h2>
             </div>
           </div>
-          
+
           <div className="triads-grid">
             {triads.map((triad, i) => (
               <div
@@ -449,26 +466,56 @@ function App() {
               </div>
             ))}
           </div>
-          <br/>
+
+          <br />
+          <div className="row mb-3">
+            <div className="col text-center">
+              <div className="form-check form-switch d-inline-block">
+                <input
+                  className="form-check-input"
+                  type="checkbox"
+                  role="switch"
+                  id="show7thToggle"
+                  checked={show7th}
+                  onChange={(e) => setShow7th(e.target.checked)}
+                />
+                <label
+                  className="form-check-label text-muted"
+                  htmlFor="show7thToggle"
+                >
+                  Show 7th
+                </label>
+                <i
+                  className="bi bi-info-circle ms-2 text-muted"
+                  data-bs-toggle="tooltip"
+                  data-bs-placement="top"
+                  title="This app uses dominant sevenths rather than diatonic sevenths. For more information on sevenths, consult your local jazz musician."
+                ></i>
+              </div>
+            </div>
+          </div>
           <div className="d-flex flex-wrap justify-content-center gap-3 mb-3">
-          <span className="triad-key">
-            <span className="triad-key-swatch M"></span>Major
-          </span>
-          <span className="triad-key">
-            <span className="triad-key-swatch m"></span>Minor
-          </span>
-          <span className="triad-key">
-            <span className="triad-key-swatch dim"></span>Diminished
-          </span>
-          <span className="triad-key">
-            <span className="triad-key-swatch aug"></span>Augmented
-          </span>
-        </div>
-        <br/>
+            <span className="triad-key">
+              <span className="triad-key-swatch M"></span>Major
+            </span>
+            <span className="triad-key">
+              <span className="triad-key-swatch m"></span>Minor
+            </span>
+            <span className="triad-key">
+              <span className="triad-key-swatch dim"></span>Diminished
+            </span>
+            <span className="triad-key">
+              <span className="triad-key-swatch aug"></span>Augmented
+            </span>
+          </div>
+          <br />
           {selectedTriad !== null ? (
             <p className="text-center text-muted fst-italic mb-0">
               Showing piano for{" "}
-              {show7th ? triads[selectedTriad].name7 : triads[selectedTriad].name}.
+              {show7th
+                ? triads[selectedTriad].name7
+                : triads[selectedTriad].name}
+              .
             </p>
           ) : (
             <p className="text-center text-muted fst-italic mb-0">
@@ -490,8 +537,10 @@ function App() {
                 <h5 className="modal-title">
                   {selectedTriad !== null && (
                     <>
-                      {show7th ? triads[selectedTriad].name7 : triads[selectedTriad].name} &mdash;{" "}
-                      {triads[selectedTriad].notes.join(" - ")}
+                      {show7th
+                        ? triads[selectedTriad].name7
+                        : triads[selectedTriad].name}{" "}
+                      &mdash; {triads[selectedTriad].notes.join(" - ")}
                       {show7th && (
                         <span className="piano-seventh">
                           {" "}
@@ -510,17 +559,14 @@ function App() {
               </div>
               <div className="modal-body">
                 {selectedTriad !== null && (
-                  <PianoChord
-                    triad={triads[selectedTriad]}
-                    show7th={show7th}
-                  />
+                  <PianoChord triad={triads[selectedTriad]} show7th={show7th} />
                 )}
               </div>
             </div>
           </div>
         </div>
       </div>
-     
+
       <div className="text-center py-4 text-muted small">
         &copy; {new Date().getFullYear()} by{" "}
         <a
